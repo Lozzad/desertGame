@@ -68,102 +68,21 @@ Shader "Volume Rendering/Moon"
                // return length(p) - s;
             //}
 
-			//Get the distance to a box
-			float getDistanceBox(float3 boxSize, float3 boxCenter, float3 rayPos)
-			{
-				return length(max(abs(rayPos - boxCenter) - boxSize, 0.0));
-			}
-
-            //get the distance to a pyramid
-            // float getDistanceOctahedron(float s, float3 octahedronCenter, float3 rayPos) {
-            //     float3 p = abs(rayPos - octahedronCenter);
-            //     float m = p.x+p.y+p.z-s;
-            //     float3 q;
-            //         if( 3.0*p.x < m ) q = p.xyz;
-            //     else if( 3.0*p.y < m ) q = p.yzx;
-            //     else if( 3.0*p.z < m ) q = p.zxy;
-            //     else return m*0.57735027;
-    
-            //     float k = clamp(0.5*(q.z-q.y+s),0.0,s); 
-            //     return length(float3(q.x,q.y-s+k,q.z-k)); 
-            // }
+            
             float getDistanceOctahedron(float size, float3 octahedronCenter, float3 rayPos) {
                 float3 p = abs(rayPos - octahedronCenter);
                 return (p.x+p.y+p.z-size)*0.57735027;
             }
-            //float sdOctahedron(vec3 p, float s) {
-                //p = abs(p);
-                //float m = p.x+p.y+p.z-s;
-                //vec3 q;
-                //if ()
-            //}
 
+			float distFunc(float3 pos) {
+                const float width = 30.0;
 
-			float distFuncOctaHedron(float3 pos) {
-                const float octaWidth = 20.0;
+                //float dist = getDistanceOctahedron(width, _MoonPos, pos);
+                float dist = getDistanceSphere(width, _MoonPos, pos);
 
-                float octahedrondistance = getDistanceOctahedron(octaWidth, _MoonPos, pos);
-
-                return octahedrondistance;
+                return dist;
             }
             
-            //The distance function, which returns the distance to moon from a position
-			// float distFunc(float3 pos)
-			// {
-			// 	const float moonRadius = 100.0;
-
-			// 	const float3 cutOutBoxSize = float3(moonRadius, moonRadius, moonRadius);
-
-			// 	//The moon consists of 2 half-spheres and this is the gap between them
-			// 	const float distanceBetweenHalf = 0.5;
-
-
-			// 	//Top half
-			// 	float3 moonPosTop = _MoonPos + float3(0.0, distanceBetweenHalf, 0.0);
-
-			// 	float moonDistanceTop = getDistanceSphere(moonRadius, moonPosTop, pos);
-
-			// 	float3 cutOutPosTop = moonPosTop + float3(0.0, moonRadius, 0.0);
-
-			// 	float cutOutDistanceTop = getDistanceBox(cutOutBoxSize, cutOutPosTop, pos);
-
-
-			// 	//Bottom half
-			// 	float3 moonPosBottom = _MoonPos + float3(0.0, -distanceBetweenHalf, 0.0);
-
-			// 	float moonDistanceBottom = getDistanceSphere(moonRadius, moonPosBottom, pos);
-
-			// 	float3 cutOutPosBottom = moonPosBottom + float3(0.0, -moonRadius, 0.0);
-
-			// 	float cutOutDistanceBottom = getDistanceBox(cutOutBoxSize, cutOutPosBottom, pos);
-
-
-			// 	//The final distance to the main moon body
-			// 	float moonBodyDist = min(max(moonDistanceTop, cutOutDistanceTop), max(moonDistanceBottom, cutOutDistanceBottom));
-
-
-			// 	//The cutout hole in the death moon
-			// 	const float cutOutRadius = moonRadius * 0.3;
-
-			// 	//The cutout is always facing the center of the map
-			// 	//First move the cutout sphere up
-			// 	float3 cutOutPos = _MoonPos + float3(0.0, moonRadius / 2.0, 0.0);
-
-			// 	//Then move the  cutout sphere in the direction to the center
-			// 	float3 centerDir = normalize(-_MoonPos);
-				
-			// 	//Don't move in y direction
-			// 	centerDir.y = 0;
-
-			// 	cutOutPos += moonRadius * centerDir;
-
-			// 	float cutOutDistance = getDistanceSphere(cutOutRadius, cutOutPos, pos);
-
-
-			// 	//The final distance to the death star
-			// 	return max(moonBodyDist, -cutOutDistance);
-			// }
-
 			//Get color at a certain position
 			fixed4 getColor(float3 pos, fixed3 color)
 			{
@@ -175,9 +94,9 @@ Shader "Volume Rendering/Moon"
 				//increases or decreases the most.
 				//The gradient can be approximated by numerical differentation
 				fixed3 normal = normalize(float3(
-					distFuncOctaHedron(pos + eps.yxx) - distFuncOctaHedron(pos - eps.yxx),
-					distFuncOctaHedron(pos + eps.xyx) - distFuncOctaHedron(pos - eps.xyx),
-					distFuncOctaHedron(pos + eps.xxy) - distFuncOctaHedron(pos - eps.xxy)));
+					distFunc(pos + eps.yxx) - distFunc(pos - eps.yxx),
+					distFunc(pos + eps.xyx) - distFunc(pos - eps.xyx),
+					distFunc(pos + eps.xxy) - distFunc(pos - eps.xxy)));
 
 				//The main light is always a direction and not a position
 				//This is the direction to the light
@@ -198,7 +117,7 @@ Shader "Volume Rendering/Moon"
 				//Add fog to make it more moon-like
 				float distance = length(pos - _CamPos);
 				
-				fixed fogDensity = 0.2;
+				fixed fogDensity = 0.9;
 
 				const fixed3 fogColor = fixed3(0.9, 0.9, 0.9);
 
@@ -216,7 +135,8 @@ Shader "Volume Rendering/Moon"
 				fixed4 finalColor = fixed4(color, 1.0);
 
 				//To make it more moon-like, the shadow should be transparent as the moon is when we see it in daylight
-				finalColor.a *= max(dot(lightDir, normal) * 1.0, 0.1);
+				//finalColor.a *= max(dot(lightDir, normal) * 0.5, 0.0);
+				finalColor.a *= max(dot(lightDir, normal), 0.0);
 
 				return finalColor;
 			}
@@ -231,13 +151,14 @@ Shader "Volume Rendering/Moon"
 				{
 					//Get the current distance to the death star along this ray
 					//float d = distFunc(pos);
-                    float d = distFuncOctaHedron(pos);
+                    float d = distFunc(pos);
 
-					//If we have hit or are very close to the death star (negative distance means inside)
+					//If we have hit or are very close to the planet (negative distance means inside)
 					if (d < 0.01)
 					{
 						//Get the color at this position
-						color = getColor(pos, fixed3(0.4, 0.4, 0.4));
+						//color = getColor(pos, fixed3(0.9, 0.9, 0.9));
+						color = getColor(pos, fixed3(1, 1, 1));
 
 						break;
 					}

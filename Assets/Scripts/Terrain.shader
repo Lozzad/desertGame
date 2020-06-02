@@ -1,4 +1,5 @@
 ﻿Shader "Custom/Terrain" {
+	//variables
 	Properties {
 		testTexture("Texture", 2D) = "white"{}
 		testScale("Scale", Float) = 1

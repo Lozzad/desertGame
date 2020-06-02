@@ -15,14 +15,14 @@ MonoBehaviour:
   autoUpdate: 1
   noiseSettings:
     normalizeMode: 1
-    scale: 100
+    scale: 10.15
     octaves: 8
-    persistance: 0.101
-    lacunarity: 2
+    persistance: 0.376
+    lacunarity: 1.5
     seed: 1
     offset: {x: 0, y: 0}
   useFalloff: 0
-  heightMultiplier: 50
+  heightMultiplier: 60
   heightCurve:
     serializedVersion: 2
     m_Curve:
